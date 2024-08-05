@@ -74,6 +74,31 @@ notesRouter.post('/', async (req, res) => {
     res.status(201).json(savedNote)
 })
 
+notesRouter.put('/:id', async (req, res) => {
+  const token = req.token
+  const user = req.user
+
+  console.log('ID:', req.params.id);
+
+  if(!(token && user)) {
+    return res.status(401).json({error: 'token missing or invalid'})
+  }
+
+  if(!req.body.content) {
+    return res.status(400).json({error: 'content missing'})
+  }
+
+  const note = {
+    content: req.body.content,
+    important: req.body.important,
+    user: user.id
+  }
+
+  const updatedNote = await Note.findByIdAndUpdate(req.params.id, note, {returnDocument: 'after'})
+
+  res.status(200).json(updatedNote)
+})
+
 module.exports = notesRouter
 
 // doing post note route using token based auth, test for this needed to be done too

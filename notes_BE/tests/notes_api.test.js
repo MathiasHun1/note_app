@@ -138,11 +138,9 @@ describe('POST', () => {
 
 
 describe('DELETE notes', () => {
-
   beforeEach(async () => {
     //load data
     await helper.generateUsersAndNotes()
-      
   })
   
   test('deletes a note wit logged in user', async () => {
@@ -177,6 +175,44 @@ describe('DELETE notes', () => {
 
     const notesAtEnd = await helper.notesInDb()
     assert.strictEqual(notesAtStart.length, notesAtEnd.length)
+  })
+})
+
+describe('PUT', () => {
+  beforeEach(async () => {
+    User.deleteMany({})
+    Note.deleteMany({})
+    await helper.generateUsersAndNotes()
+  })
+
+  test('updates note with logged in user', async () => {
+    const loginResult = await api
+    .post('/api/login')
+    .send({username: 'kisjani', password: 'admin'})
+  
+    const token = loginResult.body.token
+    const notesAtStart = await helper.notesInDb()
+
+    const allNotes = await Note.find({})
+    const noteToUpdate = allNotes[0]
+    const payLoad = {
+        content: 'updated content',
+        important: false
+    }
+
+    const result = await api
+      .put(`/api/notes/${noteToUpdate._id.toString()}`)
+      .send(payLoad)
+      .set('Authorization', `Bearer ${token}`)
+      .expect(200)
+
+      const updatedNote = result.body
+      const notesAtEnd = await helper.notesInDb()
+
+    assert.strictEqual(notesAtStart.length, notesAtEnd.length)
+    assert.strictEqual(updatedNote.id, noteToUpdate._id.toString())
+    assert.deepStrictEqual(updatedNote.user, noteToUpdate.user.toString())
+    assert(updatedNote.user)
   })
 })
 
