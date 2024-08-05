@@ -6,8 +6,14 @@ const NoteForm = ({ handleAddNote }) => {
   const [content, setContent] = useState('')
   const [important, setImportant] = useState(true)
 
+  const addNote = async (e) => {
+    e.preventDefault()
+    await handleAddNote({ content, important })
+    setContent('')
+  }
+
   return (
-    <form onSubmit={(e) => handleAddNote(e, { content, important })}
+    <form onSubmit={(e) => addNote(e)}
     className="px-8 py-4 bg-emerald-600 w-fit flex flex-col gap-2 shadow-lg">
 
       <InputField type="text" text="note:" placeholder="note here" onChange={(e) => setContent(e.target.value)} value={content} />

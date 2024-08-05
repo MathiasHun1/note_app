@@ -34,9 +34,14 @@ const deleteNote = async (id) => {
 
 const addNote = async (payLoad) => {
   const response = await axios.post(baseUrl, payLoad, config())
-  console.log(response.data);
+  return response.data
+}
+
+const updateNote = async (id, payLoad) => {
+  const response = await axios.put(`${baseUrl}/${id}`, payLoad, config())
+
   return response.data
 }
 
 
-export default { getUsersNotes, deleteNote, addNote, setToken}
+export default { getUsersNotes, deleteNote, addNote, updateNote, setToken}

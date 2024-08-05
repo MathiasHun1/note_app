@@ -84,9 +84,9 @@ notesRouter.put('/:id', async (req, res) => {
     return res.status(401).json({error: 'token missing or invalid'})
   }
 
-  if(!req.body.content) {
-    return res.status(400).json({error: 'content missing'})
-  }
+  // if(!req.body.content || !req.body.important) {
+  //   return res.status(400).json({error: 'content missing'})
+  // }
 
   const note = {
     content: req.body.content,

@@ -38,4 +38,12 @@ const errorHandler = (error, req, res, next) => {
   res.status(500).json({error: error.name})
 }
 
-module.exports = { tokenExtractor, errorHandler, userExtractor }
+const requestLogger = (req, res, next) => {
+  console.log('PATH: ', req.path);
+  console.log('METHOD: ', req.method);
+  console.log('BODY: ', req.body);
+
+  next()
+}
+
+module.exports = { tokenExtractor, errorHandler, userExtractor, requestLogger }

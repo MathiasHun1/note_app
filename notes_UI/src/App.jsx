@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import InputField from "./components/InputField"
 import StdButton from "./components/StdButton"
 import LoginForm from "./components/LoginForm"
@@ -16,6 +16,8 @@ function App() {
   const [errorMsg, setErrorMsg] = useState(null)
   const [successMsg, setSuccesMsg] = useState(null)
   const [usersNotes, setUsersNotes] = useState(null)
+
+  const ref = useRef(null)
 
   useEffect(() => {
     const loggedInUser = window.localStorage.getItem('loggedInUser')
@@ -51,8 +53,6 @@ function App() {
 
       window.localStorage.setItem('loggedInUser', JSON.stringify(result))
 
-      
-
       setUsername('')
       setPassword('')
     } catch (err) {
@@ -79,15 +79,25 @@ function App() {
     }
   }
 
-  const handleAddNote = async (e, credentials) => {
-    e.preventDefault()
+  const handleAddNote = async (credentials) => {
 
     try {
       noteService.setToken(user)
       const result = await noteService.addNote(credentials)
-      setUsersNotes(usersNotes.concat(result))      
+      setUsersNotes(usersNotes.concat(result))
+      ref.current.toggleVisibilitiy()
+      
     } catch (err) {
       console.log('error: ', err)
+    }
+  }
+
+  const handleUpdateNote = async (id, credentials) => {
+    try {
+      noteService.setToken(user)
+      const result = await noteService.updateNote(id, credentials)
+    } catch(err) {
+      console.log(err)
     }
   }
 
@@ -105,6 +115,7 @@ function App() {
                 handlePassChange={handlePassChange}
                 username={username}
                 password={password}
+                
               />
             </Togglable>
             <Message successMsg={successMsg} errorMsg={errorMsg} />
@@ -120,7 +131,7 @@ function App() {
                 text="sign out" 
                 className=" block bg-gray-600 h-6 text-sm" />
             </div>
-            <Togglable buttonText="Add note">
+            <Togglable buttonText="Add note" ref={ref}>
               <NoteForm handleAddNote={handleAddNote}/>
             </Togglable>
           </div>
@@ -137,6 +148,9 @@ function App() {
                 important={note.important}
                 noteId={note.id}
                 handleDeleteNote={handleDeleteNote}
+                handleUpdateNote={handleUpdateNote}
+                usersNotes={usersNotes}
+                setUsersNotes={setUsersNotes}
               />
               
             ))}
