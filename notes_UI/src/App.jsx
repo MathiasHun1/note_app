@@ -4,18 +4,31 @@ import StdButton from "./components/StdButton"
 import LoginForm from "./components/LoginForm"
 import loginService from "./services/loginService"
 import noteService from "./services/noteService"
+import regiterService from "./services/regiterService"
 import Togglable from "./components/Togglable"
 import Message from "./components/Message"
 import NoteForm from "./components/NoteForm"
-import Note from "./components/Note"
+import NotesList from "./components/NotesList"
+import RegisterForm from "./components/RegisterForm"
 
 function App() {
+  const [login, setLogin] = useState(true)
+  const [register, setREgister] = useState(true)
+  const [name, setName] = useState('')
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
+  const [confirmPass, setConfirmPass] = useState('')
   const [user, setUser] = useState(null)
   const [errorMsg, setErrorMsg] = useState(null)
   const [successMsg, setSuccesMsg] = useState(null)
-  const [usersNotes, setUsersNotes] = useState(null)
+  const [usersNotes, setUsersNotes] = useState([])
+  const [showImportant, setShowImportant] = useState(true)
+  const [showAll, setShowAll] = useState(true)
+
+  const notesToShow = usersNotes
+    .filter(note => (
+      showAll ? note : note.important === true
+    ))
 
   const ref = useRef(null)
 
@@ -36,12 +49,20 @@ function App() {
     }
   }, [user])
 
+  const handleNameChange = (e) => {
+    setName(e.target.value)
+  }
+
   const handleUsernameChange = (e) => {
     setUsername(e.target.value)
   }
 
   const handlePassChange = (e) => {
     setPassword(e.target.value)
+  }
+
+  const handleConfirmPassChange = (e) => {
+    setConfirmPass(e.target.value)
   }
 
   const handleLogin = async (e) => {
@@ -65,8 +86,28 @@ function App() {
 
   const handleLogout = () => {
     setUser(null)
-    setUsersNotes(null)
+    setUsersNotes([])
     window.localStorage.clear()
+  }
+
+  const handleRegister = async (e) => {
+    e.preventDefault()
+    //try to register new member
+    try {
+      await regiterService.userRegister({name, username, password, confirmPassword: confirmPass})
+
+      const result = await loginService.userLogin({ username, password })
+      setUser(result)
+
+      window.localStorage.setItem('loggedInUser', JSON.stringify(result))
+
+      setName('')
+      setUsername('')
+      setPassword('')
+      setConfirmPass('')
+    } catch (err) {
+      console.log(err)
+    }
   }
 
   const handleDeleteNote = async (id) => {
@@ -74,8 +115,21 @@ function App() {
       noteService.setToken(user)
       await noteService.deleteNote(id)
       setUsersNotes(usersNotes.filter(note => note.id !== id))
+
     }catch(err) {
       console.log('error: ', err)
+    }
+  }
+
+  const deleteAllNotes = async () => {
+    try {
+      for(let note of usersNotes) {
+        noteService.setToken(user)
+        await noteService.deleteNote(note.id)
+      }
+      setUsersNotes([])
+    } catch (error) {
+      console.log('error: ', error)
     }
   }
 
@@ -85,42 +139,68 @@ function App() {
       noteService.setToken(user)
       const result = await noteService.addNote(credentials)
       setUsersNotes(usersNotes.concat(result))
-      ref.current.toggleVisibilitiy()
+      // ref.current.toggleVisibility()
       
     } catch (err) {
       console.log('error: ', err)
     }
   }
 
-  const handleUpdateNote = async (id, credentials) => {
+  const toggleImportance = async (id) => {
     try {
+      const note = usersNotes.find(n => n.id === id)
+      const updatedNote = {...note, important: !note.important}
+      // updatedNote.important = !updatedNote.important
+
+      const updatedNotes = usersNotes.map(n => n.id !== id ? n : updatedNote)
+      setUsersNotes(updatedNotes)
       noteService.setToken(user)
-      const result = await noteService.updateNote(id, credentials)
-    } catch(err) {
+      await noteService.updateNote(id, {important: updatedNote.important})
+    }catch(err) {
       console.log(err)
     }
   }
 
+
   return (
     <div className="pt-2 w-screen min-h-screen bg-green-300 flex flex-col items-center relative">
       <h1 className="text-2xl font-bold">NOTE APP</h1>
-      <header>
+      <div>
 
-        {!user && (
-          <>
-            <Togglable buttonText="Login">
-              <LoginForm
-                handleLogin={handleLogin}
+        <div className="flex flex-col items-center gap-4">
+          {!user && login && (
+            <>
+              <Togglable buttonText="Login">
+                <LoginForm
+                  handleLogin={handleLogin}
+                  handleUsernameChange={handleUsernameChange}
+                  handlePassChange={handlePassChange}
+                  username={username}
+                  password={password}
+          
+                />
+              </Togglable>
+              <Message successMsg={successMsg} errorMsg={errorMsg} />
+            </>
+          )}
+
+          {!user && register && (
+            <Togglable buttonText="Register">
+              <RegisterForm
+                handleRegister={handleRegister}
                 handleUsernameChange={handleUsernameChange}
                 handlePassChange={handlePassChange}
+                handleConfirmPassChange={handleConfirmPassChange}
+                handleNameChange={handleNameChange}
+                name={name}
                 username={username}
                 password={password}
-                
+                confirmPass={confirmPass}
+          
               />
             </Togglable>
-            <Message successMsg={successMsg} errorMsg={errorMsg} />
-          </>
-        )}
+          )}
+        </div>
 
         {user && (
           <div>
@@ -134,30 +214,32 @@ function App() {
             <Togglable buttonText="Add note" ref={ref}>
               <NoteForm handleAddNote={handleAddNote}/>
             </Togglable>
-          </div>
-        )}
-        
-      </header>
-      <main>
-        {usersNotes && (
-          <div>
-            {usersNotes.map(note => (
-              <Note 
-                key={note.id}
-                content={note.content}
-                important={note.important}
-                noteId={note.id}
+
+            <main className="">
+              {usersNotes && (
+                <NotesList 
+                notesToShow={notesToShow}
                 handleDeleteNote={handleDeleteNote}
-                handleUpdateNote={handleUpdateNote}
-                usersNotes={usersNotes}
-                setUsersNotes={setUsersNotes}
+                toggleImportance={toggleImportance}
+                showImportant={showImportant}
+                deleteAllNotes={deleteAllNotes}
+                />
+              )}
+              <StdButton 
+                text="Delete All"
+                onClick={deleteAllNotes}
+                className=" w-full text-center mb-2" 
               />
-              
-            ))}
+              <StdButton 
+                text={`${showAll ? "show important" : "show all"}`}
+                onClick={() => setShowAll(!showAll)}
+                className=" p-1 px-2 text-center absolute top-16 left-2" 
+              />
+            </main>
           </div>
         )}
         
-      </main>
+      </div>
     </div>
   )
 }

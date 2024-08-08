@@ -33,8 +33,9 @@ const userExtractor = (req, res, next) => {
 const errorHandler = (error, req, res, next) => {
   if(error.name === 'JsonWebTokenError') {
     return res.status(401).json({error: error.name})
+  } else if (error.name === 'MongoServerError' && error.message.includes('E11000 duplicate key error')) {
+    return res.status(400).json({ error: 'expected `username` to be unique' })
   }
-
   res.status(500).json({error: error.name})
 }
 

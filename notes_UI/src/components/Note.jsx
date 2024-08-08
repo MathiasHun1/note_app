@@ -1,32 +1,22 @@
 
-const Note = ({ content, important, handleDeleteNote, noteId, handleUpdateNote, usersNotes,  setUsersNotes }) => {
+const Note = ({ note, handleDeleteNote, toggleImportance, showImportant }) => {
+  const { content, important, id } = note
   const text = important ? 'important' : 'not important'
-
-  const toggleImportance = async () => {
-    await handleUpdateNote(noteId, { important: !important })
-
-    const updatedNotes = usersNotes.map(note => {
-      if (note.id === noteId) {
-        note.important = !important
-        return note
-      }
-      return note
-    }) 
-
-    setUsersNotes(updatedNotes)
-  }
-
+  const showWhenImportant = showImportant 
+    ? {"display": 'flex'} 
+    : {'display': 'none'}
 
   return (
-    <div className="flex gap-2 my-2">
+    <div style={showWhenImportant} className="note flex justify-between my-2 p-2 bg-gray-100">
       <p>{content}</p>
 
-      <button onClick={toggleImportance} className="bg-gray-200 px-2 rounded-sm hover:bg-gray-400">{text}
-      </button>
-
-      <button className="bg-gray-200 px-2 rounded-sm hover:bg-gray-400" onClick={() => handleDeleteNote(noteId)}>
-        Delete
-      </button>
+      <div className="flex gap-2">
+        <button onClick={() => toggleImportance(id)} className="bg-gray-200 px-2 rounded-sm hover:bg-gray-400">{text}
+        </button>
+        <button className="bg-gray-200 px-2 rounded-sm hover:bg-gray-400" onClick={() => handleDeleteNote(id)}>
+          X
+        </button>
+      </div>
 
     </div>
   )

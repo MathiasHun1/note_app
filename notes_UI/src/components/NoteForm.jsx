@@ -12,11 +12,15 @@ const NoteForm = ({ handleAddNote }) => {
     setContent('')
   }
 
+  const handleChange = (e) => {
+    setContent(e.target.value)
+  }
+
   return (
     <form onSubmit={(e) => addNote(e)}
     className="px-8 py-4 bg-emerald-600 w-fit flex flex-col gap-2 shadow-lg">
 
-      <InputField type="text" text="note:" placeholder="note here" onChange={(e) => setContent(e.target.value)} value={content} />
+      <InputField type="text" text="note:" placeholder="note here" onChange={handleChange} value={content} id="note-input"/>
 
       <div className="flex flex-col items-center">
         <p className="inline">important? </p>

@@ -38,4 +38,5 @@ const main2 = async () => {
 }
 
 
-main2()
+
+main1()
